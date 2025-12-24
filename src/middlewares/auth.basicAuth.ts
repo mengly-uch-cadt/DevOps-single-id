@@ -22,7 +22,13 @@ export const authenticateBasicAuth = async (
     // Decode Base64 credentials
     const base64Credentials = authHeader.substring(6); // Remove 'Basic ' prefix
     const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8');
-    const [allow_endpoint, token] = credentials.split(':');
+
+    // Split only on the last colon to handle URLs with colons (e.g., http://127.0.0.1:3001:TOKEN)
+    const lastColonIndex = credentials.lastIndexOf(':');
+    const allow_endpoint = credentials.substring(0, lastColonIndex);
+    const token = credentials.substring(lastColonIndex + 1);
+
+    console.log('Basic Auth attempt:', { allow_endpoint, token: token?.substring(0, 20) + '...' });
 
     if (!allow_endpoint || !token) {
       sendError(res, 'Invalid credentials format', 401);
@@ -31,6 +37,8 @@ export const authenticateBasicAuth = async (
 
     // Validate credentials against accesses table
     const isValid = await accessesService.validateBasicAuth(allow_endpoint, token);
+
+    console.log('Basic Auth valid:', isValid);
 
     if (!isValid) {
       sendError(res, 'Invalid credentials', 401);
