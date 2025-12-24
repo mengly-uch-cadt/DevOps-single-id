@@ -1,29 +1,18 @@
-# Use official Node.js LTS image
-FROM node:18-alpine AS builder
+
+# Use Node.js LTS (Debian for OpenSSL compatibility)
+FROM node:18-bullseye
 
 WORKDIR /app
 
-# Install dependencies
-COPY package.json package-lock.json* ./
-RUN npm install --production
+COPY package*.json ./
+RUN npm install
 
-# Copy source code
+# Copy Prisma schema before generating client
+COPY prisma ./prisma
+RUN npx prisma generate
+
 COPY . .
+RUN npm run build
 
-# Build (if using TypeScript, otherwise skip this step)
-RUN if [ -f tsconfig.json ]; then npm run build; fi
-
-# --- Production image ---
-FROM node:18-alpine
-WORKDIR /app
-
-# Copy only built files and node_modules from builder
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json ./
-
-# Expose port (change if your app uses a different port)
 EXPOSE 3000
-
-# Start the app
-CMD ["node", "dist/server.js"]
+CMD ["npm", "run", "start"]
