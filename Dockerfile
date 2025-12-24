@@ -8,7 +8,7 @@ COPY package*.json ./
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libssl1.1 ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
-    && npm ci --no-audit --prefer-offline --silent
+    && npm ci --no-audit --prefer-offline --silent --ignore-scripts
 
 # Copy Prisma schema before generating client
 # Copy Prisma schema before generating client
