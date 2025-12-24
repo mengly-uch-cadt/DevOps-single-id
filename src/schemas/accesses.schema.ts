@@ -1,13 +1,12 @@
 import { z } from 'zod';
 
 export const createAccessSchema = z.object({
-  body: z.object({
-    allow_endpoint: z.string().min(1).max(255),
-  }),
+  allow_endpoint: z.string().min(1, 'Endpoint is required').max(255),
 });
 
-export const validateAccessSchema = z.object({
-  body: z.object({
-    endpoint: z.string().min(1).max(255).optional(),
-  }),
+export const updateAccessSchema = z.object({
+  allow_endpoint: z.string().min(1).max(255).optional(),
 });
+
+export type CreateAccessInput = z.infer<typeof createAccessSchema>;
+export type UpdateAccessInput = z.infer<typeof updateAccessSchema>;

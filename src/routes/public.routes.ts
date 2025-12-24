@@ -1,10 +1,22 @@
-import { Router } from 'express';
-import authRoutes from './auth.routes';
-import accessesRoutes from './accesses.routes';
+import { Router, Request, Response } from 'express';
+import { sendSuccess } from '../utils/response';
 
 const router = Router();
 
-router.use('/sid', authRoutes);
-router.use('/sid/accesses', accessesRoutes);
+// Health check endpoint
+router.get('/health', (_req: Request, res: Response) => {
+  sendSuccess(
+    res,
+    {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    },
+    'Service is healthy'
+  );
+});
+
+// Public settings routes
+
 
 export default router;

@@ -1,48 +1,68 @@
-import { Request, Response, NextFunction } from "express";
-import { createAccess, validateAccess } from "../services/accesses.service";
+import { Request, Response } from 'express';
+import { accessesService } from '../services/accesses.service';
+import { sendSuccess, sendError } from '../utils/response';
 
-export const create = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const { allow_endpoint } = req.body;
-    const access = await createAccess(allow_endpoint);
-    res.status(201).json(access);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const validate = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const auth = req.headers.authorization || "";
-    const bearerToken = auth.startsWith("Bearer ") ? auth.slice(7) : null;
-    const apiKey =
-      typeof req.headers["api-key"] === "string"
-        ? req.headers["api-key"]
-        : null;
-    const token = bearerToken || apiKey;
-    const { endpoint } = req.body || {};
-
-    if (!token) {
-      res.status(401).json({ error: "Missing service token" });
-      return;
+export class AccessesController {
+  async create(req: Request, res: Response): Promise<void> {
+    try {
+      const access = await accessesService.createAccess(req.body);
+      sendSuccess(res, access, 'Access created', 201);
+    } catch (error: any) {
+      sendError(res, error.message, 500);
     }
-
-    const result = await validateAccess(token, endpoint);
-    if (!result.valid) {
-      res.status(403).json({ valid: false });
-      return;
-    }
-
-    res.json({ valid: true, access: result.access });
-  } catch (error) {
-    next(error);
   }
-};
+
+  async getAll(req: Request, res: Response): Promise<void> {
+    try {
+      const { page, limit } = req.query;
+      const options = page && limit ? { page: Number(page), limit: Number(limit) } : undefined;
+      const accesses = await accessesService.getAllAccesses(options);
+      sendSuccess(res, accesses, 'Accesses retrieved');
+    } catch (error: any) {
+      sendError(res, error.message, 500);
+    }
+  }
+
+  async getById(req: Request, res: Response): Promise<void> {
+    try {
+      const access = await accessesService.getAccessByGlobalId(req.params.global_id);
+      if (!access) {
+        sendError(res, 'Access not found', 404);
+        return;
+      }
+      sendSuccess(res, access, 'Access retrieved');
+    } catch (error: any) {
+      sendError(res, error.message, 500);
+    }
+  }
+
+  async update(req: Request, res: Response): Promise<void> {
+    try {
+      const access = await accessesService.getAccessByGlobalId(req.params.global_id);
+      if (!access) {
+        sendError(res, 'Access not found', 404);
+        return;
+      }
+      const updated = await accessesService.updateAccess((access as any).id, req.body);
+      sendSuccess(res, updated, 'Access updated');
+    } catch (error: any) {
+      sendError(res, error.message, 500);
+    }
+  }
+
+  async delete(req: Request, res: Response): Promise<void> {
+    try {
+      const access = await accessesService.getAccessByGlobalId(req.params.global_id);
+      if (!access) {
+        sendError(res, 'Access not found', 404);
+        return;
+      }
+      await accessesService.deleteAccess((access as any).id);
+      sendSuccess(res, null, 'Access deleted');
+    } catch (error: any) {
+      sendError(res, error.message, 500);
+    }
+  }
+}
+
+export const accessesController = new AccessesController();

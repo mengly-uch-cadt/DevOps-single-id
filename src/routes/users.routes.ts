@@ -1,22 +1,14 @@
 import { Router } from 'express';
-import * as controller from '../controllers/users.controller';
-import * as request from '../requests/users.request';
+import { usersController } from '../controllers/users.controller';
 import { validate } from '../middlewares/validate';
-import {
-  createUserSchema,
-  updateUserSchema,
-  globalIdParamsSchema,
-} from '../schemas/users.schema';
-import { authenticateServiceToken } from '../middlewares/auth.serviceToken';
+import { createUserRequest, updateUserRequest } from '../requests/users.request';
 
 const router = Router();
 
-router.use(authenticateServiceToken);
-
-router.post('/', validate(createUserSchema), request.createRequest, controller.create);
-router.get('/', controller.getAll);
-router.get('/:global_id', validate(globalIdParamsSchema), request.globalIdRequest, controller.getByGlobalId);
-router.put('/:global_id', validate(updateUserSchema), request.updateRequest, controller.update);
-router.delete('/:global_id', validate(globalIdParamsSchema), request.globalIdRequest, controller.deleteByGlobalId);
+router.post('/', validate(createUserRequest), usersController.create);
+router.get('/', usersController.getAll);
+router.get('/:global_id', usersController.getById);
+router.put('/:global_id', validate(updateUserRequest), usersController.update);
+router.delete('/:global_id', usersController.delete);
 
 export default router;

@@ -1,8 +1,21 @@
 import { Router } from 'express';
+import settingsRoutes from './settings.routes';
+import authRoutes from './auth.routes';
+import accessesRoutes from './accesses.routes';
 import usersRoutes from './users.routes';
+import { authenticateJWT } from '../middlewares/auth.jwt';
 
 const router = Router();
 
-router.use('/sid/users', usersRoutes);
+// Auth routes (no JWT middleware - handles own auth via Bearer token)
+router.use('/auth', authRoutes);
+
+// Apply JWT authentication to all other private routes
+router.use(authenticateJWT);
+
+// CRUD routes
+router.use('/accesses', accessesRoutes);
+router.use('/users', usersRoutes);
+router.use('/settings', settingsRoutes);
 
 export default router;

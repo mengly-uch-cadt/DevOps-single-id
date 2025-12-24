@@ -1,76 +1,65 @@
-import crypto from "crypto";
-import { baseService } from "./base.service";
-import { UuidUtil } from "../utils/uuid";
+import { BaseService, PaginationOptions } from './base.service';
+import { v4 as uuidv4 } from 'uuid';
 
-const selectUser = {
-  id: true,
-  global_id: true,
-  name: true,
-  created_at: true,
-  updated_at: true,
-};
-
-const generateHash = (length = 24) => {
-  const chars =
-    "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const bytes = crypto.randomBytes(length);
-  let out = "";
-  for (let i = 0; i < length; i += 1) {
-    out += chars[bytes[i] % chars.length];
+export class UsersService extends BaseService {
+  async createUser(data: {
+    name: string;
+    hash: string;
+  }) {
+    return await this.create(this.prisma.users, {
+      global_id: uuidv4(),
+      ...data,
+    });
   }
-  return out;
-};
 
-export const createUser = async (data: {
-  name: string;
-  password: string;
-  global_id?: string;
-}) => {
-  const global_id = data.global_id || UuidUtil.generate();
-  const hash = generateHash();
-  const user = await baseService.prisma.users.create({
-    data: {
-      global_id,
-      name: data.name,
-      hash,
-      created_at: new Date(),
-      updated_at: new Date(),
-    },
-    select: selectUser,
-  });
-  return user;
-};
+  async getUserById(id: number) {
+    return await this.findById(this.prisma.users, id);
+  }
 
-export const getUserByGlobalId = async (global_id: string) => {
-  return await baseService.prisma.users.findUnique({
-    where: { global_id },
-    select: selectUser,
-  });
-};
+  async getUserByGlobalId(global_id: string) {
+    return await this.findByGlobalId(this.prisma.users, global_id);
+  }
 
-export const getAllUsers = async () => {
-  return await baseService.prisma.users.findMany({
-    select: selectUser,
-    orderBy: { id: "desc" },
-  });
-};
+  async getAllUsers(options?: PaginationOptions) {
+    if (options) {
+      return await this.paginate<any>(
+        this.prisma.users,
+        options,
+        undefined,
+        { created_at: 'desc' }
+      );
+    }
+    return await this.findMany(this.prisma.users, {
+      orderBy: { created_at: 'desc' },
+    });
+  }
 
-export const updateUser = async (
-  global_id: string,
-  data: { name?: string; password?: string },
-) => {
-  const hash = data.password ? generateHash() : undefined;
-  return await baseService.prisma.users.update({
-    where: { global_id },
-    data: {
-      ...(data.name !== undefined ? { name: data.name } : {}),
-      ...(hash !== undefined ? { hash } : {}),
-      updated_at: new Date(),
-    },
-    select: selectUser,
-  });
-};
+  async updateUser(id: number, data: {
+    name?: string;
+    hash?: string;
+  }) {
+    return await this.update(this.prisma.users, id, data);
+  }
 
-export const deleteUser = async (global_id: string) => {
-  await baseService.prisma.users.delete({ where: { global_id } });
-};
+  async deleteUser(id: number) {
+    return await this.delete(this.prisma.users, id);
+  }
+
+  async getUserByUserId(global_id: string) {
+    return await this.findOne(this.prisma.users, { global_id });
+  }
+
+  async getUserWithRelations(id: number) {
+    return await this.findOne(this.prisma.users, { id }, {
+      include: {
+        admins: true,
+        notifications: {
+          orderBy: { created_at: 'desc' },
+          take: 10,
+        },
+      },
+    });
+  }
+}
+
+export const usersService = new UsersService();

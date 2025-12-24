@@ -1,58 +1,52 @@
-import crypto from "crypto";
-import { baseService } from "./base.service";
-import { UuidUtil } from "../utils/uuid";
+import { BaseService, PaginationOptions } from './base.service';
+import { v4 as uuidv4 } from 'uuid';
 
-const selectAccess = {
-  id: true,
-  global_id: true,
-  allow_endpoint: true,
-  token: true,
-  created_at: true,
-  updated_at: true,
-};
-
-const generateToken = () =>
-  crypto.randomBytes(192).toString("base64url").slice(0, 255);
-
-export const createAccess = async (allow_endpoint: string) => {
-  const token = generateToken();
-  const global_id = UuidUtil.generate();
-  const access = await baseService.prisma.accesses.create({
-    data: {
-      global_id,
-      allow_endpoint,
+export class AccessesService extends BaseService {
+  async createAccess(data: {
+    allow_endpoint: string;
+  }) {
+    // Generate a random 250-character hexadecimal token
+    const token = Array.from({ length: 250 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    return await this.create(this.prisma.accesses, {
+      global_id: uuidv4(),
+      allow_endpoint: data.allow_endpoint,
       token,
-      created_at: new Date(),
-      updated_at: new Date(),
-    },
-    select: selectAccess,
-  });
+    });
+  }
 
-  return {
-    token: access.token,
-    global_id: access.global_id,
-    allow_endpoint: access.allow_endpoint,
-  };
-};
+  async getAccessById(id: number) {
+    return await this.findById(this.prisma.accesses, id);
+  }
 
-export const getAccessByToken = async (token: string) => {
-  return await baseService.prisma.accesses.findUnique({
-    where: { token },
-    select: selectAccess,
-  });
-};
+  async getAccessByGlobalId(global_id: string) {
+    return await this.findByGlobalId(this.prisma.accesses, global_id);
+  }
 
-export const validateAccess = async (token: string, endpoint?: string) => {
-  const access = await getAccessByToken(token);
-  if (!access) return { valid: false };
-  if (endpoint && access.allow_endpoint !== endpoint) return { valid: false };
-  return { valid: true, access };
-};
+  async getAllAccesses(options?: PaginationOptions) {
+    if (options) {
+      return await this.paginate<any>(this.prisma.accesses, options);
+    }
+    return await this.findMany(this.prisma.accesses);
+  }
 
-export const isAllowedOrigin = async (origin: string) => {
-  const access = await baseService.prisma.accesses.findFirst({
-    where: { allow_endpoint: origin },
-    select: { id: true },
-  });
-  return Boolean(access);
-};
+  async updateAccess(id: number, data: {
+    allow_endpoint?: string;
+  }) {
+    // Regenerate a random 250-character hexadecimal token on update
+    const token = Array.from({ length: 250 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    return await this.update(this.prisma.accesses, id, {
+      ...data,
+      token,
+    });
+  }
+
+  async deleteAccess(id: number) {
+    return await this.delete(this.prisma.accesses, id);
+  }
+
+  async getAccessByToken(token: string) {
+    return await this.findOne(this.prisma.accesses, { token });
+  }
+}
+
+export const accessesService = new AccessesService();
