@@ -14,7 +14,7 @@ export interface JWTPayload {
 }
 
 export class AuthService extends BaseService {
-  async login(global_id: string, hash: string): Promise<{ token: string; user: any } | null> {
+  async login(user_id: string, hash: string): Promise<{ token: string; user: any } | null> {
     try {
       const jwtSecret = process.env.JWT_SECRET;
 
@@ -22,13 +22,18 @@ export class AuthService extends BaseService {
         throw new Error('JWT_SECRET not configured');
       }
 
-      // Find user by global_id and hash
+      // Debug: Log the incoming credentials
+      console.log('Login attempt:', { user_id, hash });
+
+      // Find user by user_id (global_id in DB) and hash
       const user = await this.prisma.users.findFirst({
         where: {
-          global_id,
+          global_id: user_id,
           hash,
         },
       });
+
+      console.log('User found:', user ? 'Yes' : 'No');
 
       if (!user) {
         return null;
@@ -44,7 +49,7 @@ export class AuthService extends BaseService {
 
       const ttlMinutes = jwtTtlSetting ? parseInt(jwtTtlSetting.value) : 1440; // Default 24 hours
 
-      // Generate JWT token
+      // Generate JWT token with user_id
       const payload: JWTPayload = {
         user_id: user.global_id,
         hash: user.hash,
@@ -58,7 +63,7 @@ export class AuthService extends BaseService {
       return {
         token,
         user: {
-          global_id: user.global_id,
+          user_id: user.global_id,
           name: user.name,
         },
       };

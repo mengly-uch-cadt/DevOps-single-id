@@ -5,8 +5,8 @@ import { sendSuccess, sendError } from '../utils/response';
 export class AuthController {
   async login(req: Request, res: Response): Promise<void> {
     try {
-      const { global_id, hash } = req.body;
-      const result = await authService.login(global_id, hash);
+      const { user_id, hash } = req.body;
+      const result = await authService.login(user_id, hash);
 
       if (!result) {
         sendError(res, 'Invalid credentials', 401);

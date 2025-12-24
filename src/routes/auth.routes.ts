@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { authController } from '../controllers/auth.controller';
 import { validate } from '../middlewares/validate';
-import { loginRequest, ssoLoginRequest } from '../requests/auth.request';
+import { loginRequest } from '../requests/auth.request';
+import { authenticateBasicAuth } from '../middlewares/auth.basicAuth';
 
 const router = Router();
 
-router.post('/login', validate(loginRequest), authController.login);
-router.post('/sso', validate(ssoLoginRequest), authController.ssoLogin);
+// Login endpoint requires Basic Auth (allow_endpoint:token)
+router.post('/login', authenticateBasicAuth, validate(loginRequest), authController.login);
 
 export default router;

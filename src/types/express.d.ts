@@ -7,6 +7,7 @@ declare global {
     interface Request {
       serviceAccess?: AccessModel;
       sidUser?: { global_id: string; tokenPayload: JwtPayload };
+      accessInfo?: { allow_endpoint: string };
     }
   }
 }
