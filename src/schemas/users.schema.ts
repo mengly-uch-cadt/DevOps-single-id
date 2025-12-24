@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const createUserSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255),
-  hash: z.string().min(1, 'Hash is required').max(255),
+  hash: z.string().min(1).max(255).optional(),
 });
 
 export const updateUserSchema = z.object({

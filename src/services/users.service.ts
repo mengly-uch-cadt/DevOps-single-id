@@ -1,22 +1,27 @@
 import { BaseService, PaginationOptions } from './base.service';
 import { v4 as uuidv4 } from 'uuid';
 import { notificationSyncService } from './notificationSync.service';
+import crypto from 'crypto';
 
 export class UsersService extends BaseService {
   async createUser(data: {
     name: string;
-    hash: string;
+    hash?: string;
   }) {
+    // Auto-generate hash if not provided
+    const hash = data.hash || crypto.randomBytes(32).toString('hex');
+
     const user = await this.create(this.prisma.users, {
       global_id: uuidv4(),
-      ...data,
+      name: data.name,
+      hash,
     });
 
     // Sync to notification service in background (don't block on failure)
     notificationSyncService.syncUserToNotification({
       global_id: (user as any).global_id,
       name: data.name,
-      hash: data.hash,
+      hash,
     }).catch(err => console.error('Background sync failed:', err));
 
     return user;
