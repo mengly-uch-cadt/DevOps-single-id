@@ -40,13 +40,13 @@ export const createApp = (): Application => {
       transport:
         process.env.NODE_ENV === "development"
           ? {
-              target: "pino-pretty",
-              options: {
-                colorize: true,
-                translateTime: "SYS:standard",
-                ignore: "pid,hostname",
-              },
-            }
+            target: "pino-pretty",
+            options: {
+              colorize: true,
+              translateTime: "SYS:standard",
+              ignore: "pid,hostname",
+            },
+          }
           : undefined,
     }),
   );
@@ -55,7 +55,7 @@ export const createApp = (): Application => {
   app.use(express.urlencoded({ extended: true }));
 
   app.get("/health", (_req, res) => {
-    res.json({ status: "ok" });
+    res.json({ status: "ok CD WORK" });
   });
 
   app.use("/api", routes);
