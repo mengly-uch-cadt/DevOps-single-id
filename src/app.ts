@@ -54,9 +54,24 @@ export const createApp = (): Application => {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
+  // Root endpoint
+  app.get('/', (_req, res) => {
+    res.json({
+      service: 'Single ID System API',
+      version: '1.0.0',
+      status: 'running',
+      endpoints: {
+        public: '/api/public',
+        private: '/api/private'
+      }
+    });
+  });
+
   app.get("/health", (_req, res) => {
     res.json({ status: "ok CD WORK" });
   });
+
+
 
   app.use("/api", routes);
 
