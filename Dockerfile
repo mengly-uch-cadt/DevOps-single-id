@@ -6,12 +6,12 @@ FROM node:18-bullseye
 
 WORKDIR /app
 
+# Copy package files and Prisma schema first
 COPY package*.json ./
-RUN npm install
-
-# Copy Prisma schema before generating client
 COPY prisma ./prisma
-RUN npx prisma generate
+
+# Install dependencies (postinstall will run prisma generate)
+RUN npm install
 
 
 COPY . .
